@@ -17,6 +17,7 @@ function createRoot(jQ, root, textbox, editable) {
   };
 
   var cursor = root.cursor = Cursor(root);
+  root.latexHistory = [];
 
   root.renderLatex(contents.text());
 
@@ -127,9 +128,13 @@ function createRoot(jQ, root, textbox, editable) {
   var textareaManager = manageTextarea(textarea, {
     container: jQ,
     key: function(key, evt) {
+      if ((key == 'Backspace' || key == 'Delete') && root['addUndoEntry'])
+        root.addUndoEntry();
       cursor.parent.bubble('onKey', key, evt);
     },
     text: function(text) {
+      if (root['addUndoEntry'])
+        root.addUndoEntry();
       cursor.parent.bubble('onText', text);
     },
     cut: function(e) {
@@ -366,6 +371,16 @@ var RootMathBlock = P(MathBlock, function(_, _super) {
       while (this.cursor[L]) this.cursor.selectLeft();
       break;
 
+    case 'Meta-Z':
+    case 'Ctrl-Z':
+      this.undoEdit();
+      break;
+
+    case 'Meta-Shift-Z':
+    case 'Ctrl-Shift-Z':
+      this.redoEdit();
+      break;
+
     default:
       return false;
     }
@@ -374,6 +389,54 @@ var RootMathBlock = P(MathBlock, function(_, _super) {
   };
   _.onText = function(ch) {
     this.cursor.write(ch);
+    return false;
+  };
+  _.lastFocus = function() {
+    jQuery('.mathquill-editable').removeClass('lastFocus');
+    this.jQ.addClass('lastFocus'); // only add .lastFocus to the top-level math block
+    return false;
+  };
+
+  // undo/redo functionality
+  _.addUndoEntry = function() {
+    if (this.undoPosition < 0) {
+      this.latexHistory = [];
+      this.undoPosition = undefined;
+    } else if (this.undoPosition + 1 < this.latexHistory.length) // get rid of all history after current position
+      this.latexHistory.splice(this.undoPosition + 1, this.latexHistory.length - this.undoPosition + 1);
+    this.latexHistory.push( this.latex() );
+    if (this.undoPosition !== undefined)
+      this.undoPosition++;
+    return false;
+  };
+  _.undoEdit = function() {
+    var latexToRestore;
+    if (this.undoPosition === undefined) {
+      this.undoPosition = this.latexHistory.length - 1;
+      this.latexHistory.push( this.latex() ); // add final edit, after setting undoPosition
+    }
+    if (this.latexHistory.length > 0 && this.undoPosition >= 0)
+      latexToRestore = this.latexHistory[this.undoPosition--];
+    if (latexToRestore !== undefined) {
+      this.renderLatex( latexToRestore );
+      if (latexToRestore == '') this.jQ.addClass('empty');
+    } else
+      alert('nothing to undo!');
+    return false;
+  };
+  _.redoEdit = function() {
+    var latexToRestore;
+    if (this.undoPosition === undefined)
+      this.undoPosition = this.latexHistory.length - 1;
+    else if (this.undoPosition < 0)
+      this.undoPosition = 0;
+    if (this.latexHistory.length > 0 && this.undoPosition < this.latexHistory.length - 1)
+      latexToRestore = this.latexHistory[++this.undoPosition];
+    if (latexToRestore) {
+      this.renderLatex( latexToRestore );
+      if (latexToRestore == '') this.jQ.addClass('empty');
+    } else
+      alert('nothing to redo!');
     return false;
   };
 });

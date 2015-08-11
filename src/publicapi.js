@@ -41,6 +41,16 @@ jQuery.fn.mathquill = function(cmd, latex) {
     var blockId = $(this).attr(mqBlockId),
       block = blockId && MathElement[blockId];
     return block && block.text();
+  case 'undo':
+    var blockId = $(this).attr(mqBlockId),
+      block = blockId && MathElement[blockId];
+    if (block) block.undoEdit();
+    return;
+  case 'redo':
+    var blockId = $(this).attr(mqBlockId),
+      block = blockId && MathElement[blockId];
+    if (block) block.redoEdit();
+    return;
   case 'html':
     return this.html().replace(/ ?hasCursor|hasCursor /, '')
       .replace(/ class=(""|(?= |>))/g, '')
@@ -53,8 +63,10 @@ jQuery.fn.mathquill = function(cmd, latex) {
           block = blockId && MathElement[blockId],
           cursor = block && block.cursor;
 
-        if (cursor)
+        if (cursor) {
+          block.addUndoEntry();
           cursor.writeLatex(latex).parent.blur();
+        }
       });
   case 'cmd':
     if (arguments.length > 1)
@@ -64,6 +76,7 @@ jQuery.fn.mathquill = function(cmd, latex) {
           cursor = block && block.cursor;
 
         if (cursor) {
+          block.addUndoEntry();
           var seln = cursor.prepareWrite();
           if (/^\\[a-z]+$/i.test(latex)) cursor.insertCmd(latex.slice(1), seln);
           else cursor.insertCh(latex, seln);
