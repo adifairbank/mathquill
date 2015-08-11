@@ -169,6 +169,8 @@ function createRoot(jQ, root, textbox, editable) {
     if (!cursor.parent)
       cursor.insAtRightEnd(root);
     cursor.parent.jQ.addClass('hasCursor');
+    jQuery('.mathquill-editable').removeClass('lastFocus');
+    cursor.parent.bubble('lastFocus');
     if (cursor.selection) {
       cursor.selection.jQ.removeClass('blur');
       setTimeout(root.selectionChanged); //re-select textarea contents after tabbing away and back

@@ -363,6 +363,7 @@ var MathBlock = P(MathElement, function(_) {
   _.focus = function() {
     this.jQ.addClass('hasCursor');
     this.jQ.removeClass('empty');
+    this.bubble('lastFocus');
 
     return this;
   };
