@@ -61,7 +61,7 @@ Currently, MathQuill only supports a limited scripting API:
 
 * To access the LaTeX contents of a mathquill-ified element:
 
-        $('<span>x^{-1}</span>').mathquill().mathquill('latex') === 'x^{-1}'
+        $('<span>x^{-1}</span>').mathquill('latex') === 'x^{-1}'
 
 * To render some LaTeX in a mathquill-ified element:
 
@@ -74,6 +74,14 @@ Currently, MathQuill only supports a limited scripting API:
 * To insert a LaTeX command at the current cursor position or with the current selection:
 
         someMathQuillifiedElement.mathquill('cmd','\\sqrt')
+
+* To undo the most recent edit (can be called repeatedly):
+
+        someMathQuillifiedElement.mathquill('undo')
+
+* To redo the most recent "undo" (can be called repeatedly):
+
+        someMathQuillifiedElement.mathquill('redo')
 
 **A Note On Changing Colors:**
 
